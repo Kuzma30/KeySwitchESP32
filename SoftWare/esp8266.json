@@ -1,0 +1,82 @@
+esphome:
+  name: lamp-dimmer
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "e+t6+u706nNayn2VhWJ4n3XAlzi/YjfNq0XXb5lNFaU="
+
+ota:
+  password: "b83664d0b2d9ad3941b9594cb324e86d"
+
+wifi:
+  ssid: "HA"
+  password: "88888888"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Lamp-Dimmer Fallback Hotspot"
+    password: "hnLrqxoUVUpc"
+
+captive_portal:
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 5
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "PIR Sensor"
+    device_class: motion    
+  - platform: gpio
+    pin:
+      number: 13
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "Key UP"
+    filters:
+      - delayed_on: 10ms
+  - platform: gpio
+    pin:
+      number: 14
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "Key Down"
+    filters:
+      - delayed_on: 10ms
+  - platform: gpio
+    pin:
+      number: 12
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "On/Off"
+    filters:
+      - delayed_on: 10ms
+    on_press:
+      then:
+      - output.set: LED_PWM    
+
+output:
+  - platform: esp8266_pwm
+    pin: 16
+    frequency: 1000 Hz
+    id: LED_PWM
+
+# Example usage in a light
+light:
+  - platform: monochromatic
+    output: LED_PWM
+    name: "Kitchen Light"    
