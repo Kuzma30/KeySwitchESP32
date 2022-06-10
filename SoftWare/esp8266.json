@@ -25,58 +25,108 @@ wifi:
     password: "hnLrqxoUVUpc"
 
 captive_portal:
+
+switch:
+  - platform: gpio
+    pin: 10
+#    name: "LED"
+    id: led_1
+    restore_mode: RESTORE_DEFAULT_OFF
+  
+  - platform: gpio
+    pin: 2
+#LED_up
+    id: led_2
+
+  - platform: gpio
+    pin: 15
+#LED_down
+    id: led_3
+    
+# PWM LED    
+output:
+  - platform: esp8266_pwm
+    pin: 16
+    id: gpio_16
+
+light:
+  - platform: monochromatic
+    output: gpio_16
+    id: LED1
+    name: "LED2"
+# PWM LED end section   
+
+number:
+  - platform: template
+    name: "Brightness"
+    optimistic: true
+    min_value: 0
+    max_value: 100
+    step: 5
+    id: lamp_brightness
+
 binary_sensor:
   - platform: gpio
-    pin:
-      number: 5
+    id: "LED_On_Off"
+    pin: 
+      number: 12
       inverted: true
       mode:
         input: true
         pullup: true
-    name: "PIR Sensor"
-    device_class: motion    
+    filters:
+      delayed_on_off: 100ms
+    on_press:
+      then:
+        - light.toggle: LED1        
+
   - platform: gpio
+    id: key_up
     pin:
       number: 13
       inverted: true
       mode:
         input: true
         pullup: true
-    name: "Key UP"
-    filters:
-      - delayed_on: 10ms
+    on_press:
+      - while:
+          condition:   
+            - binary_sensor.is_on: key_up
+            - light.is_on: LED1
+          then:
+            - switch.turn_on: led_2  
+            - light.dim_relative:
+                id: LED1
+                relative_brightness: 5%
+                transition_length: 0.1s
+            - number.set:
+                id: lamp_brightness
+                value: 55
+            - delay: 0.1s          
+    on_release:
+      then:
+        - switch.turn_off: led_2          
+
   - platform: gpio
-    pin:
+    id: key_down
+    pin: 
       number: 14
       inverted: true
       mode:
         input: true
         pullup: true
-    name: "Key Down"
-    filters:
-      - delayed_on: 10ms
-  - platform: gpio
-    pin:
-      number: 12
-      inverted: true
-      mode:
-        input: true
-        pullup: true
-    name: "On/Off"
-    filters:
-      - delayed_on: 10ms
     on_press:
+      - while:
+          condition:   
+            - binary_sensor.is_on: key_down
+            - light.is_on: LED1
+          then:
+            - switch.turn_on: led_3  
+            - light.dim_relative:
+                id: LED1
+                relative_brightness: -5%
+                transition_length: 0.1s
+            - delay: 0.1s          
+    on_release:
       then:
-      - output.set: LED_PWM    
-
-output:
-  - platform: esp8266_pwm
-    pin: 16
-    frequency: 1000 Hz
-    id: LED_PWM
-
-# Example usage in a light
-light:
-  - platform: monochromatic
-    output: LED_PWM
-    name: "Kitchen Light"    
+        - switch.turn_off: led_3        
