@@ -48,12 +48,12 @@ output:
   - platform: esp8266_pwm
     pin: 16
     id: gpio_16
-
 light:
   - platform: monochromatic
     output: gpio_16
     id: LED1
     name: "LED2"
+    restore_mode: ALWAYS_OFF
 # PWM LED end section   
 
 number:
@@ -63,6 +63,7 @@ number:
     min_value: 0
     max_value: 100
     step: 5
+    initial_value: 30
     id: lamp_brightness
 
 binary_sensor:
@@ -77,9 +78,21 @@ binary_sensor:
     filters:
       delayed_on_off: 100ms
     on_press:
-      then:
-        - light.toggle: LED1        
-
+      then: 
+       - if:  
+          condition:  
+            - light.is_off: LED1 
+          then: 
+             - light.turn_on: 
+                 id: LED1  
+                 brightness: !lambda |-
+                  return id(lamp_brightness).state/100.0;
+       - if:  
+          condition:  
+            - light.is_on: LED1 
+          then: 
+            - light.turn_off: 
+                id: LED1   
   - platform: gpio
     id: key_up
     pin:
@@ -93,20 +106,21 @@ binary_sensor:
           condition:   
             - binary_sensor.is_on: key_up
             - light.is_on: LED1
-          then:
-            - switch.turn_on: led_2  
-            - light.dim_relative:
-                id: LED1
-                relative_brightness: 5%
-                transition_length: 0.1s
-            - number.set:
+            - number.in_range:
                 id: lamp_brightness
-                value: 55
+                above: 0.0
+                below: 95.0
+          then:
+            - number.increment: lamp_brightness
+            - light.turn_on:
+                id: LED1
+                brightness: !lambda |-
+                  return id(lamp_brightness).state/100.0;
+                transition_length: 0.1s
             - delay: 0.1s          
     on_release:
       then:
-        - switch.turn_off: led_2          
-
+        - switch.turn_off: led_2  
   - platform: gpio
     id: key_down
     pin: 
@@ -120,11 +134,16 @@ binary_sensor:
           condition:   
             - binary_sensor.is_on: key_down
             - light.is_on: LED1
+            - number.in_range:
+                id: lamp_brightness
+                above: 5.0
+                below: 100.0            
           then:
-            - switch.turn_on: led_3  
-            - light.dim_relative:
+            - number.decrement: lamp_brightness
+            - light.turn_on:
                 id: LED1
-                relative_brightness: -5%
+                brightness: !lambda |-
+                  return id(lamp_brightness).state/100.0;
                 transition_length: 0.1s
             - delay: 0.1s          
     on_release:
