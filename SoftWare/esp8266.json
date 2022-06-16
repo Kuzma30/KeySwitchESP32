@@ -28,25 +28,20 @@ captive_portal:
 
 switch:
   - platform: gpio
-    pin: 10
-#    name: "LED"
-    id: led_1
-    restore_mode: RESTORE_DEFAULT_OFF
-  
-  - platform: gpio
-    pin: 2
-#LED_up
-    id: led_2
-
-  - platform: gpio
-    pin: 15
-#LED_down
-    id: led_3
-    
+    pin: 10 #    name: "LED On/Off"
+    id: led_on_off
+  - platform: template
+    optimistic: true
+    id: move_swi #In night mode move detected
+  - platform: template
+    optimistic: true
+    id: on_off_mode #ON or OF state for lamp
+    name: "STATE"
 # PWM LED    
 output:
   - platform: esp8266_pwm
     pin: 16
+    frequency: 1000
     id: gpio_16
 light:
   - platform: monochromatic
@@ -66,7 +61,81 @@ number:
     initial_value: 30
     id: lamp_brightness
 
+  - platform: template
+    name: "SaveBrightness"
+    optimistic: true
+    min_value: 0
+    max_value: 100
+    step: 5
+    initial_value: 30
+    id: save_lamp_brightness
+
 binary_sensor:
+  - platform: gpio
+    id: "PIR_IN"
+    name: "Move"
+    pin: 
+      number: 5
+      inverted: true      
+      mode:
+        input: true
+        pullup: true
+    on_press:
+      then: 
+       - if:  
+          condition:  
+            - binary_sensor.is_on: Night_mode 
+            - switch.is_on: on_off_mode
+            - switch.is_off: move_swi
+          then: 
+            - switch.template.publish:
+               id: move_swi
+               state: ON
+            - light.turn_on: 
+                 id: LED1  
+                 brightness: 90%               
+            - delay: 20s
+            - switch.template.publish:
+               id: move_swi
+               state: OFF
+            - light.turn_on: 
+                id: LED1 
+                brightness: 30%            
+  - platform: gpio
+    id: "Night_mode"
+    name: "Night mode"
+    pin: 
+      number: 10
+      mode:
+        input: true
+    on_press:
+      then: 
+       - if:  
+          condition:  
+            #- light.is_off: LED1 
+            - switch.is_on: on_off_mode  # Lamp is on, can use night mode
+          then: 
+            # need save previosly set brightness TODO
+             - number.set: 
+                 id: save_lamp_brightness
+                 value: !lambda |-
+                   return id(lamp_brightness).state;
+             - light.turn_on: 
+                 id: LED1  
+                 brightness: 30%
+    on_release:
+      then:
+       #TODO need restore brightness
+       - if:  
+          condition:  
+            #- light.is_off: LED1 
+            - switch.is_on: on_off_mode  # Lamp is on, leave it ON after night
+          then: 
+            # need restore previosly set brightness TODO
+            - light.turn_on: 
+                 id: LED1  
+                 brightness: !lambda |-
+                   return id(save_lamp_brightness).state/100.0;
   - platform: gpio
     id: "LED_On_Off"
     pin: 
@@ -83,6 +152,9 @@ binary_sensor:
           condition:  
             - light.is_off: LED1 
           then: 
+             - switch.template.publish:
+                id: on_off_mode
+                state: ON
              - light.turn_on: 
                  id: LED1  
                  brightness: !lambda |-
@@ -91,6 +163,9 @@ binary_sensor:
           condition:  
             - light.is_on: LED1 
           then: 
+            - switch.template.publish:
+               id: on_off_mode
+               state: OFF          
             - light.turn_off: 
                 id: LED1   
   - platform: gpio
@@ -108,7 +183,7 @@ binary_sensor:
             - light.is_on: LED1
             - number.in_range:
                 id: lamp_brightness
-                above: 0.0
+                above: 5.0
                 below: 95.0
           then:
             - number.increment: lamp_brightness
@@ -118,9 +193,6 @@ binary_sensor:
                   return id(lamp_brightness).state/100.0;
                 transition_length: 0.1s
             - delay: 0.1s          
-    on_release:
-      then:
-        - switch.turn_off: led_2  
   - platform: gpio
     id: key_down
     pin: 
@@ -136,7 +208,7 @@ binary_sensor:
             - light.is_on: LED1
             - number.in_range:
                 id: lamp_brightness
-                above: 5.0
+                above: 10.0
                 below: 100.0            
           then:
             - number.decrement: lamp_brightness
@@ -146,6 +218,3 @@ binary_sensor:
                   return id(lamp_brightness).state/100.0;
                 transition_length: 0.1s
             - delay: 0.1s          
-    on_release:
-      then:
-        - switch.turn_off: led_3        
