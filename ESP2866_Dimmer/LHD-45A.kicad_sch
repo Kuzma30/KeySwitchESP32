@@ -221,7 +221,7 @@
     (uuid 464aa031-265c-410d-83c1-58d5ac5e6c8d)
     (property "Reference" "U9" (id 0) (at 144.145 49.53 0))
     (property "Value" "LDH-45A-350" (id 1) (at 144.145 52.07 0))
-    (property "Footprint" "" (id 2) (at 143.51 45.72 0)
+    (property "Footprint" "dimmer:LDH-45A" (id 2) (at 143.51 45.72 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (id 3) (at 143.51 45.72 0)
