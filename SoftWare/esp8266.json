@@ -28,8 +28,8 @@ captive_portal:
 
 switch:
   - platform: gpio
-    pin: 10 #    name: "LED On/Off"
-    id: led_on_off
+    pin: 4 #    name: "LED On/Off"
+    id: rele_on_off
   - platform: template
     optimistic: true
     id: move_swi #In night mode move detected
@@ -40,12 +40,14 @@ switch:
 # PWM LED    
 output:
   - platform: esp8266_pwm
-    pin: 16
+    pin: 
+      number: 5
+      inverted: true  
     frequency: 1000
-    id: gpio_16
+    id: gpio_pwm
 light:
   - platform: monochromatic
-    output: gpio_16
+    output: gpio_pwm
     id: LED1
     name: "LED2"
     restore_mode: ALWAYS_OFF
@@ -75,7 +77,7 @@ binary_sensor:
     id: "PIR_IN"
     name: "Move"
     pin: 
-      number: 5
+      number: 1
       inverted: true      
       mode:
         input: true
@@ -105,7 +107,7 @@ binary_sensor:
     id: "Night_mode"
     name: "Night mode"
     pin: 
-      number: 10
+      number: 3
       mode:
         input: true
     on_press:
