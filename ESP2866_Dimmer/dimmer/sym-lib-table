@@ -1,3 +1,4 @@
 (sym_lib_table
   (lib (name "dimmer_lib")(type "KiCad")(uri "${KIPRJMOD}/dimmer_lib.kicad_sym")(options "")(descr ""))
+  (lib (name "tinkerforge")(type "KiCad")(uri "/home/aleksandr/Kuzma30/KeySwitchESP32/ESP2866_Dimmer/KiCAD/tinkerforge.kicad_sym")(options "")(descr ""))
 )

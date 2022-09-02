@@ -33,9 +33,9 @@
         "other_text_thickness": 0.15,
         "other_text_upright": false,
         "pads": {
-          "drill": 0.762,
-          "height": 1.524,
-          "width": 1.524
+          "drill": 2.5,
+          "height": 2.5,
+          "width": 2.5
         },
         "silk_line_width": 0.15,
         "silk_text_italic": false,
@@ -120,7 +120,7 @@
       },
       "track_widths": [
         0.0,
-        0.5,
+        0.0,
         1.0,
         2.0,
         3.0
@@ -350,7 +350,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "dimmer.kicad_pro",
+    "filename": "top_plate_dimmer.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -429,7 +429,7 @@
   },
   "sheets": [
     [
-      "3fd54105-4b7e-4004-9801-76ec66108a22",
+      "78166138-0525-44c5-9ee7-19666cfe563b",
       ""
     ]
   ],
