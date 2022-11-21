@@ -1,3 +1,4 @@
 (fp_lib_table
   (lib (name "dimmer")(type "KiCad")(uri "${KIPRJMOD}/dimmer.pretty")(options "")(descr ""))
+  (lib (name "dpak")(type "KiCad")(uri "/home/qtembed/b2qtdevice/MyWork/CANboard/PowerModule/DPAK")(options "")(descr ""))
 )
