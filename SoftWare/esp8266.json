@@ -1,5 +1,5 @@
 esphome:
-  name: lamp-dimmer
+  name: pwm-lamp
 
 esp8266:
   board: esp01_1m
@@ -10,26 +10,54 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "e+t6+u706nNayn2VhWJ4n3XAlzi/YjfNq0XXb5lNFaU="
+    key: "b4sti5dHy0J7/F1AuJn7haFqFies6ldH5wWtRRw0mhM="
 
 ota:
-  password: "b83664d0b2d9ad3941b9594cb324e86d"
+  password: "aa9ddcfcd6a7be9a7d402856b49d0bad"
 
 wifi:
-  ssid: "HA"
-  password: "88888888"
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "Lamp-Dimmer Fallback Hotspot"
-    password: "hnLrqxoUVUpc"
+    ssid: "Pwm-Lamp Fallback Hotspot"
+    password: "WDRWveLLay4G"
 
 captive_portal:
 
+# Example configuration entry for ESP32
+i2c:
+  sda: GPIO4
+  scl: GPIO5
+  scan: true
+#  id: bus_a
+
+display:
+  - platform: lcd_pcf8574
+    dimensions: 20x4
+    address: 0x27
+    lambda: |-
+      it.print("Hello World!");
+
+pcf8574:
+  - id: 'pcf8574_hub'
+    address: 0x20
+    pcf8575: false
+
+# Individual outputs
 switch:
   - platform: gpio
-    pin: 4 #    name: "LED On/Off"
+    name: "On/Off RELE out"
     id: rele_on_off
+    pin:
+      pcf8574: pcf8574_hub
+      # Use pin number 5
+      number: 5
+      # One of INPUT or OUTPUT
+      mode:
+        output: true
+      inverted: false
   - platform: template
     optimistic: true
     id: move_swi #In night mode move detected
@@ -37,13 +65,13 @@ switch:
     optimistic: true
     id: on_off_mode #ON or OF state for lamp
     name: "STATE"
-# PWM LED    
+
 output:
   - platform: esp8266_pwm
     pin: 
-      number: 5
+      number: GPIO12
       inverted: true  
-    frequency: 1000
+    frequency: 10000
     id: gpio_pwm
 light:
   - platform: monochromatic
@@ -76,12 +104,14 @@ binary_sensor:
   - platform: gpio
     id: "PIR_IN"
     name: "Move"
-    pin: 
-      number: 1
-      inverted: true      
+    pin:
+      pcf8574: pcf8574_hub
+      # Use pin number 4
+      number: 4
+      # One of INPUT or OUTPUT
       mode:
         input: true
-        pullup: true
+      inverted: true    
     on_press:
       then: 
        - if:  
@@ -106,10 +136,14 @@ binary_sensor:
   - platform: gpio
     id: "Night_mode"
     name: "Night mode"
-    pin: 
+    pin:
+      pcf8574: pcf8574_hub
+      # Use pin number 3
       number: 3
+      # One of INPUT or OUTPUT
       mode:
         input: true
+      inverted: true        
     on_press:
       then: 
        - if:  
@@ -141,11 +175,13 @@ binary_sensor:
   - platform: gpio
     id: "LED_On_Off"
     pin: 
-      number: 12
-      inverted: true
+      pcf8574: pcf8574_hub
+      # Use pin number 0
+      number: 0
+      # One of INPUT or OUTPUT
       mode:
         input: true
-        pullup: true
+      inverted: true
     filters:
       delayed_on_off: 100ms
     on_press:
@@ -173,11 +209,13 @@ binary_sensor:
   - platform: gpio
     id: key_up
     pin:
-      number: 13
-      inverted: true
+      pcf8574: pcf8574_hub
+      # Use pin number 1
+      number: 1
+      # One of INPUT or OUTPUT
       mode:
         input: true
-        pullup: true
+      inverted: true
     on_press:
       - while:
           condition:   
@@ -193,16 +231,18 @@ binary_sensor:
                 id: LED1
                 brightness: !lambda |-
                   return id(lamp_brightness).state/100.0;
-                transition_length: 0.1s
-            - delay: 0.1s          
+                transition_length: 0.5s
+            - delay: 0.5s          
   - platform: gpio
     id: key_down
-    pin: 
-      number: 14
-      inverted: true
+    pin:
+      pcf8574: pcf8574_hub
+      # Use pin number 2
+      number: 2
+      # One of INPUT or OUTPUT
       mode:
         input: true
-        pullup: true
+      inverted: true
     on_press:
       - while:
           condition:   
@@ -218,5 +258,5 @@ binary_sensor:
                 id: LED1
                 brightness: !lambda |-
                   return id(lamp_brightness).state/100.0;
-                transition_length: 0.1s
-            - delay: 0.1s          
+                transition_length: 0.5s
+            - delay: 0.5s          
