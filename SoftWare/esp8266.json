@@ -38,7 +38,10 @@ display:
     dimensions: 20x4
     address: 0x27
     lambda: |-
-      it.print("Hello World!");
+      it.printf(0,1,"Lamp is :%s",id(on_off_mode).state?"On":"Off");
+      it.printf(0,2,"Lamp RELE is :%s",id(rele_on_off).state?"On":"Off");
+      it.printf(0,3,"Brightness:%.1f",id(lamp_brightness).state);
+    id: my_lcd_display
 
 pcf8574:
   - id: 'pcf8574_hub'
@@ -49,6 +52,7 @@ pcf8574:
 switch:
   - platform: gpio
     name: "On/Off RELE out"
+    restore_mode: ALWAYS_OFF
     id: rele_on_off
     pin:
       pcf8574: pcf8574_hub
@@ -57,7 +61,7 @@ switch:
       # One of INPUT or OUTPUT
       mode:
         output: true
-      inverted: false
+      inverted: true
   - platform: template
     optimistic: true
     id: move_swi #In night mode move detected
@@ -85,19 +89,19 @@ number:
   - platform: template
     name: "Brightness"
     optimistic: true
-    min_value: 0
+    min_value: 60
     max_value: 100
-    step: 5
-    initial_value: 30
+    step: 2
+    initial_value: 70
     id: lamp_brightness
 
   - platform: template
     name: "SaveBrightness"
     optimistic: true
-    min_value: 0
+    min_value: 60
     max_value: 100
-    step: 5
-    initial_value: 30
+    step: 2
+    initial_value: 70
     id: save_lamp_brightness
 
 binary_sensor:
@@ -132,7 +136,7 @@ binary_sensor:
                state: OFF
             - light.turn_on: 
                 id: LED1 
-                brightness: 30%            
+                brightness: 60%            
   - platform: gpio
     id: "Night_mode"
     name: "Night mode"
@@ -158,7 +162,7 @@ binary_sensor:
                    return id(lamp_brightness).state;
              - light.turn_on: 
                  id: LED1  
-                 brightness: 30%
+                 brightness: 60%
     on_release:
       then:
        #TODO need restore brightness
@@ -173,7 +177,7 @@ binary_sensor:
                  brightness: !lambda |-
                    return id(save_lamp_brightness).state/100.0;
   - platform: gpio
-    id: "LED_On_Off"
+    id: "LED_On_Off" # Key for On/Off LAMP
     pin: 
       pcf8574: pcf8574_hub
       # Use pin number 0
@@ -193,6 +197,9 @@ binary_sensor:
              - switch.template.publish:
                 id: on_off_mode
                 state: ON
+             - switch.template.publish:
+                id: rele_on_off
+                state: ON   
              - light.turn_on: 
                  id: LED1  
                  brightness: !lambda |-
@@ -204,6 +211,9 @@ binary_sensor:
             - switch.template.publish:
                id: on_off_mode
                state: OFF          
+            - switch.template.publish:
+               id: rele_on_off
+               state: OFF   
             - light.turn_off: 
                 id: LED1   
   - platform: gpio
@@ -223,16 +233,16 @@ binary_sensor:
             - light.is_on: LED1
             - number.in_range:
                 id: lamp_brightness
-                above: 5.0
-                below: 95.0
+                above: 62.0
+                below: 98.0
           then:
             - number.increment: lamp_brightness
             - light.turn_on:
                 id: LED1
                 brightness: !lambda |-
                   return id(lamp_brightness).state/100.0;
-                transition_length: 0.5s
-            - delay: 0.5s          
+                transition_length: 0.1s
+            - delay: 0.1s          
   - platform: gpio
     id: key_down
     pin:
@@ -250,7 +260,7 @@ binary_sensor:
             - light.is_on: LED1
             - number.in_range:
                 id: lamp_brightness
-                above: 10.0
+                above: 64.0
                 below: 100.0            
           then:
             - number.decrement: lamp_brightness
@@ -258,5 +268,5 @@ binary_sensor:
                 id: LED1
                 brightness: !lambda |-
                   return id(lamp_brightness).state/100.0;
-                transition_length: 0.5s
-            - delay: 0.5s          
+                transition_length: 0.1s
+            - delay: 0.1s          
