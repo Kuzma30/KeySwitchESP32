@@ -204,6 +204,12 @@ binary_sensor:
                  id: LED1  
                  brightness: !lambda |-
                   return id(lamp_brightness).state/100.0;
+             - binary_sensor.template.publish:
+                  id: backlight
+                  state: ON
+             - binary_sensor.template.publish:
+                  id: backlight
+                  state: OFF                  
        - if:  
           condition:  
             - light.is_on: LED1 
@@ -216,6 +222,9 @@ binary_sensor:
                state: OFF   
             - light.turn_off: 
                 id: LED1   
+            - binary_sensor.template.publish:
+                id: backlight
+                state: OFF                   
   - platform: gpio
     id: key_up
     pin:
@@ -269,4 +278,17 @@ binary_sensor:
                 brightness: !lambda |-
                   return id(lamp_brightness).state/100.0;
                 transition_length: 0.1s
-            - delay: 0.1s          
+            - delay: 0.1s        
+  - platform: template
+    id: backlight
+    name: "LCD backlight"
+    filters:
+      - delayed_off: 30s
+    on_press:
+      then:
+        - lambda: |-
+            id(my_lcd_display).backlight();
+    on_release:
+      then:
+        - lambda: |-
+            id(my_lcd_display).no_backlight();              
